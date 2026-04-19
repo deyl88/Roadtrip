@@ -4,221 +4,727 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Road Quest</title>
-
 <style>
-html,body{
-margin:0;
-padding:0;
-width:100%;
-height:100%;
-overflow:hidden;
-font-family:Arial,Helvetica,sans-serif;
-background:#1b2b34;
-color:white;
-touch-action:manipulation;
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  touch-action: manipulation;
+  background: #8fd0ff;
 }
 
-.screen{
-position:absolute;
-inset:0;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-padding:20px;
-text-align:center;
+body {
+  position: relative;
 }
 
-h1{
-font-size:48px;
-margin:0 0 20px;
+#bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(to bottom, #8fd2ff 0%, #dff5ff 50%, #79be67 51%, #79be67 65%, #6b6b6b 65%, #6b6b6b 100%);
 }
 
-button{
-font-size:24px;
-padding:16px 28px;
-margin:10px;
-border:none;
-border-radius:14px;
-background:white;
-color:#1b2b34;
-font-weight:bold;
-min-width:220px;
+.mountain {
+  position: absolute;
+  bottom: 46%;
+  width: 0;
+  height: 0;
+  border-left: 180px solid transparent;
+  border-right: 180px solid transparent;
+  border-bottom: 170px solid rgba(104, 135, 158, 0.55);
 }
 
-#game{
-display:none;
-position:absolute;
-inset:0;
-padding:12px;
-box-sizing:border-box;
+.cloud {
+  position: absolute;
+  width: 120px;
+  height: 42px;
+  background: rgba(255,255,255,0.88);
+  border-radius: 50px;
 }
 
-#topbar{
-display:flex;
-justify-content:space-between;
-gap:10px;
-font-size:26px;
-font-weight:bold;
-margin-bottom:12px;
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: rgba(255,255,255,0.88);
+  border-radius: 50%;
 }
 
-#cards{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-height:calc(100% - 80px);
+.cloud::before {
+  width: 46px;
+  height: 46px;
+  left: 18px;
+  top: -16px;
 }
 
-.card{
-background:#ffffff;
-color:#111;
-border-radius:18px;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-font-size:28px;
-font-weight:bold;
-text-align:center;
-padding:12px;
+.cloud::after {
+  width: 56px;
+  height: 56px;
+  left: 50px;
+  top: -22px;
 }
 
-.points{
-font-size:22px;
-margin-top:10px;
-color:#555;
+.road-line {
+  position: absolute;
+  bottom: 15%;
+  width: 90px;
+  height: 10px;
+  background: #ffd84d;
+  border-radius: 8px;
+  animation: roadMove linear infinite;
+  opacity: 0.85;
 }
 
-.small{
-font-size:18px;
-opacity:.8;
-margin-top:10px;
+@keyframes roadMove {
+  from { transform: translateX(115vw); }
+  to { transform: translateX(-35vw); }
+}
+
+.car {
+  position: absolute;
+  bottom: 19%;
+  width: 76px;
+  height: 28px;
+  border-radius: 14px 18px 8px 8px;
+  animation: carMove linear infinite;
+}
+
+.car::before, .car::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  background: #222;
+  border-radius: 50%;
+}
+
+.car::before { left: 8px; }
+.car::after { right: 8px; }
+
+.car-roof {
+  position: absolute;
+  left: 16px;
+  top: -10px;
+  width: 34px;
+  height: 16px;
+  background: rgba(255,255,255,0.28);
+  border-radius: 10px 10px 2px 2px;
+}
+
+@keyframes carMove {
+  from { transform: translateX(115vw); }
+  to { transform: translateX(-30vw); }
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+  text-align: center;
+}
+
+.overlay {
+  background: rgba(18, 32, 43, 0.56);
+  backdrop-filter: blur(3px);
+}
+
+h1 {
+  font-size: 44px;
+  margin: 0 0 14px;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+h2 {
+  margin: 10px 0 8px;
+  font-size: 24px;
+}
+
+button {
+  font-size: 21px;
+  padding: 14px 22px;
+  margin: 7px;
+  border: none;
+  border-radius: 14px;
+  background: white;
+  color: #1b2b34;
+  font-weight: bold;
+  min-width: 210px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+}
+
+button.selected {
+  outline: 4px solid #ffe083;
+}
+
+.mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#game {
+  display: none;
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  z-index: 4;
+}
+
+#topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  flex-wrap: wrap;
+}
+
+#cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  height: calc(100% - 72px);
+  align-content: center;
+}
+
+.card {
+  background: rgba(255,255,255,0.96);
+  color: #111;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+  min-height: 120px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+}
+
+.card-emoji {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.card-label {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.points {
+  font-size: 18px;
+  margin-top: 8px;
+  color: #555;
+}
+
+.small {
+  font-size: 16px;
+  opacity: .9;
+  margin-top: 10px;
+  max-width: 760px;
+  line-height: 1.35;
+}
+
+.mode-note {
+  margin-top: 10px;
+  font-size: 15px;
+  opacity: 0.92;
+}
+
+@media (max-width: 800px) {
+  h1 { font-size: 34px; }
+  h2 { font-size: 20px; }
+  #topbar { font-size: 17px; }
+  .card { min-height: 108px; }
+  .card-emoji { font-size: 34px; }
+  .card-label { font-size: 18px; }
+  .points { font-size: 15px; }
+  button { font-size: 17px; min-width: 165px; }
+  .small { font-size: 14px; }
 }
 </style>
 </head>
 <body>
 
-<div id="menu" class="screen">
-<h1>ROAD QUEST</h1>
-<button onclick="startGame(1)">1 Player / Team</button>
-<button onclick="startGame(2)">2 Player Versus</button>
-<div class="small">Tap item when you spot it outside</div>
+<div id="bg">
+  <div class="mountain" style="left:-40px;"></div>
+  <div class="mountain" style="left:180px;border-left-width:220px;border-right-width:220px;border-bottom-width:200px;"></div>
+  <div class="mountain" style="left:520px;border-left-width:190px;border-right-width:190px;border-bottom-width:165px;"></div>
+
+  <div class="cloud" style="top:60px;left:60px;"></div>
+  <div class="cloud" style="top:110px;left:320px;transform:scale(0.95);"></div>
+  <div class="cloud" style="top:80px;right:90px;transform:scale(1.1);"></div>
+
+  <div class="road-line" style="left:0;animation-duration:2.8s;animation-delay:0s;"></div>
+  <div class="road-line" style="left:20vw;animation-duration:3.1s;animation-delay:-1.2s;"></div>
+  <div class="road-line" style="left:45vw;animation-duration:2.9s;animation-delay:-2.1s;"></div>
+  <div class="road-line" style="left:70vw;animation-duration:3.0s;animation-delay:-0.8s;"></div>
+
+  <div class="car" style="left:8vw;background:#ef5350;animation-duration:12s;animation-delay:-2s;">
+    <div class="car-roof"></div>
+  </div>
+  <div class="car" style="left:44vw;background:#f9a825;animation-duration:15s;animation-delay:-8s;transform:scale(0.95);">
+    <div class="car-roof"></div>
+  </div>
+  <div class="car" style="left:72vw;background:#43a047;animation-duration:10s;animation-delay:-5s;transform:scale(1.08);">
+    <div class="car-roof"></div>
+  </div>
+</div>
+
+<div id="menu" class="screen overlay">
+  <h1>ROAD QUEST</h1>
+
+  <h2>Players</h2>
+  <div class="mode-row">
+    <button id="player1Btn" type="button">1 Player / Team</button>
+    <button id="player2Btn" type="button">2 Player Versus</button>
+  </div>
+
+  <h2>Mode</h2>
+  <div class="mode-row">
+    <button id="kidBtn" type="button">Kid Mode 🌈</button>
+    <button id="classicBtn" type="button">Classic 🚗</button>
+    <button id="hardBtn" type="button">Hardcore 🔥</button>
+  </div>
+
+  <button id="startBtn" type="button">Start Game</button>
+
+  <div class="small">
+    Spot things outside the car. Tap the card when you find it. New one pops in right away.
+  </div>
+  <div class="mode-note">
+    No duplicate cards on screen at the same time.
+  </div>
 </div>
 
 <div id="game">
-<div id="topbar">
-<div id="score1">Score: 0</div>
-<div id="score2"></div>
-</div>
+  <div id="topbar">
+    <div id="score1">Score: 0</div>
+    <div id="score2"></div>
+    <div id="modeLabel"></div>
+  </div>
 
-<div id="cards"></div>
+  <div id="cards"></div>
 </div>
 
 <script>
-let mode=1;
-let turn=1;
-let score1=0;
-let score2=0;
+const STORAGE_KEY = "roadQuestSettingsV1";
 
-const pool = [
-["Yellow Car",10],
-["Red Car",10],
-["Palm Tree",10],
-["Pickup Truck",10],
-["Motorcycle",15],
-["Police Car",20],
-["Billboard",15],
-["RV",20],
-["Convertible",20],
-["Dog In Car",25],
-["Handicap Plate",25],
-["Taxi",25],
-["Surfboard On Car",30],
-["Tesla Cybertruck",40],
-["Ferrari",50],
-["Lamborghini",50],
-["Out Of State Plate",20],
-["Bus",15],
-["Trailer",20],
-["Orange Car",15],
-["Roof Rack",20],
-["Jeep Wrangler",20],
-["School Bus",25],
-["Construction Crane",30]
+let playerMode = 1;
+let gameMode = "classic";
+let turn = 1;
+let score1 = 0;
+let score2 = 0;
+
+const kidPool = [
+  ["🟡🚗", "Yellow Car", 10],
+  ["🔴🚗", "Red Car", 10],
+  ["🔵🚗", "Blue Car", 10],
+  ["🚚", "Truck", 10],
+  ["🚌", "Bus", 15],
+  ["🏍️", "Motorcycle", 15],
+  ["🚓", "Police Car", 20],
+  ["🌴", "Palm Tree", 10],
+  ["🐶🚘", "Dog In Car", 20],
+  ["🚐", "Van", 10],
+  ["🚕", "Taxi", 20],
+  ["🚙", "Jeep", 15],
+  ["☁️", "Cloud", 10],
+  ["🚦", "Traffic Light", 10],
+  ["🛑", "Stop Sign", 10],
+  ["🚧", "Cone", 10],
+  ["🛻", "Pickup", 10],
+  ["😎", "Sunglasses", 15],
+  ["🎩", "Hat", 15],
+  ["🌉", "Bridge", 15],
+  ["🚛", "Big Truck", 20],
+  ["🛻🪜", "Ladder Truck", 20],
+  ["🌴🌴", "Two Palms", 15],
+  ["🐕", "Dog", 15],
+  ["🚘🏄", "Surfboard Car", 25],
+  ["💡", "Flashing Lights", 20],
+  ["🟦📍", "Blue Sign", 15],
+  ["🟩📍", "Green Sign", 15],
+  ["🟧🚧", "Barrel", 15],
+  ["🚌🎒", "School Bus", 20]
 ];
 
-function randItem(){
-return pool[Math.floor(Math.random()*pool.length)];
+const easyPool = [
+  ["Yellow Car", 10],
+  ["Red Car", 10],
+  ["Blue Car", 10],
+  ["White Truck", 10],
+  ["Pickup Truck", 10],
+  ["Palm Tree", 10],
+  ["Motorcycle", 15],
+  ["Bus", 15],
+  ["Billboard", 15],
+  ["Roof Rack", 15],
+  ["Van", 10],
+  ["Jeep", 15],
+  ["Stop Sign", 10],
+  ["Orange Cone", 10],
+  ["School Bus", 15],
+  ["Black SUV", 10],
+  ["Traffic Light", 10],
+  ["RV", 20],
+  ["Convertible", 20],
+  ["Trailer", 20],
+  ["Flashing Lights", 25],
+  ["Turquoise Sign", 20],
+  ["Tires On Side Of Road", 25],
+  ["Construction Crane", 20],
+  ["Bike Rack", 15],
+  ["Police Car", 20],
+  ["Tow Truck", 20],
+  ["Crosswalk Sign", 15],
+  ["Work Truck", 15],
+  ["Motorhome", 20]
+];
+
+const mediumPool = [
+  ["Bumper Sticker", 20],
+  ["Custom License Plate", 25],
+  ["Vanity Plate", 25],
+  ["Handicap Plate", 25],
+  ["Out Of State Plate", 20],
+  ["Dog In Car", 25],
+  ["Dog Head Out Window", 35],
+  ["Surfboard On Car", 30],
+  ["Kayak On Car", 30],
+  ["Ladder On Truck", 25],
+  ["Temporary Paper Plate", 25],
+  ["Dealer Plate Frame", 20],
+  ["National Park Sticker", 20],
+  ["College Sticker", 20],
+  ["Sports Team Sticker", 20],
+  ["Baby On Board", 25],
+  ["Political Sticker", 25],
+  ["Funny Sticker", 25],
+  ["Cowboy Hat", 30],
+  ["Guy In A Hat", 25],
+  ["Person Wearing Sunglasses", 20],
+  ["Beard Guy", 20],
+  ["Bright Shirt", 20],
+  ["Window Down", 15],
+  ["Person Eating In Car", 30],
+  ["Taxi", 25],
+  ["Construction Barrel", 20],
+  ["Car With Dents", 25],
+  ["Bird On Sign", 30],
+  ["Flower Sticker", 20],
+  ["Classic VW Bus", 35],
+  ["Skateboard In Car", 30],
+  ["Cargo Box On Roof", 25],
+  ["Two Bikes On Car", 30],
+  ["Specialty Plate Design", 25]
+];
+
+const hardPool = [
+  ["Tesla Cybertruck", 40],
+  ["Ferrari", 50],
+  ["Lamborghini", 50],
+  ["Guy In Cowboy Hat", 35],
+  ["Dog In Truck Bed", 40],
+  ["Horse Trailer", 40],
+  ["Three Motorcycles Together", 50],
+  ["Limo", 50],
+  ["Police Motorcycle", 40],
+  ["Surf Van", 40],
+  ["Vintage Plate", 35],
+  ["Paper Map On Dashboard", 35],
+  ["Bright Pink Car", 40],
+  ["Tow Truck Towing Car", 45],
+  ["Jeep With No Doors", 35],
+  ["Car Carrying Mattress", 45],
+  ["Boat On Trailer", 40],
+  ["Motorcycle With Passenger", 35],
+  ["Dog Wearing Goggles", 60],
+  ["Cybertruck Towing Something", 60],
+  ["Ferrari Or Lamborghini", 50],
+  ["Convertible With Hat", 35],
+  ["Truck With Ladder Rack", 35],
+  ["Three Palm Trees Together", 30],
+  ["Tour Bus", 35]
+];
+
+const recentQueue = [];
+const RECENT_LIMIT = 12;
+
+const player1Btn = document.getElementById("player1Btn");
+const player2Btn = document.getElementById("player2Btn");
+const kidBtn = document.getElementById("kidBtn");
+const classicBtn = document.getElementById("classicBtn");
+const hardBtn = document.getElementById("hardBtn");
+const startBtn = document.getElementById("startBtn");
+const modeLabel = document.getElementById("modeLabel");
+
+function saveSettings() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    playerMode,
+    gameMode
+  }));
 }
 
-function buildCards(){
-const cards=document.getElementById("cards");
-cards.innerHTML="";
-
-for(let i=0;i<4;i++){
-const item=randItem();
-
-const div=document.createElement("div");
-div.className="card";
-div.innerHTML=`
-<div>${item[0]}</div>
-<div class="points">+${item[1]}</div>
-`;
-
-div.onclick=()=>claim(item[1],div);
-
-cards.appendChild(div);
-}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.playerMode === 1 || data.playerMode === 2) playerMode = data.playerMode;
+    if (["kid","classic","hard"].includes(data.gameMode)) gameMode = data.gameMode;
+  } catch (e) {}
 }
 
-function claim(points,card){
-
-if(mode===1){
-score1+=points;
-}else{
-if(turn===1){
-score1+=points;
-turn=2;
-}else{
-score2+=points;
-turn=1;
-}
+function refreshSelectionUI() {
+  player1Btn.classList.toggle("selected", playerMode === 1);
+  player2Btn.classList.toggle("selected", playerMode === 2);
+  kidBtn.classList.toggle("selected", gameMode === "kid");
+  classicBtn.classList.toggle("selected", gameMode === "classic");
+  hardBtn.classList.toggle("selected", gameMode === "hard");
 }
 
-updateScores();
-
-const item=randItem();
-
-card.innerHTML=`
-<div>${item[0]}</div>
-<div class="points">+${item[1]}</div>
-`;
-
-card.onclick=()=>claim(item[1],card);
+function currentModeName() {
+  if (gameMode === "kid") return "Kid Mode 🌈";
+  if (gameMode === "hard") return "Hardcore 🔥";
+  return "Classic 🚗";
 }
 
-function updateScores(){
-document.getElementById("score1").innerText=
-mode===1 ? `Score: ${score1}` : `River: ${score1}`;
-
-document.getElementById("score2").innerText=
-mode===2 ? `Dad: ${score2}` : "";
+function getPools() {
+  if (gameMode === "kid") {
+    return { kid: kidPool };
+  }
+  if (gameMode === "hard") {
+    return {
+      easy: mediumPool,
+      medium: hardPool,
+      hard: hardPool
+    };
+  }
+  return {
+    easy: easyPool,
+    medium: mediumPool,
+    hard: hardPool
+  };
 }
 
-function startGame(m){
-mode=m;
-turn=1;
-score1=0;
-score2=0;
+function pickFromPool(pool, usedLabels) {
+  const normalized = pool.map(x => {
+    if (x.length === 3) return { emoji: x[0], label: x[1], points: x[2] };
+    return { emoji: "", label: x[0], points: x[1] };
+  });
 
-document.getElementById("menu").style.display="none";
-document.getElementById("game").style.display="block";
+  const candidates = normalized
+    .filter(item => !usedLabels.has(item.label))
+    .filter(item => !recentQueue.includes(item.label));
 
-updateScores();
-buildCards();
+  const fallback = normalized.filter(item => !usedLabels.has(item.label));
+  const source = candidates.length ? candidates : fallback;
+  return source[Math.floor(Math.random() * source.length)];
 }
+
+function rememberItem(label) {
+  recentQueue.push(label);
+  while (recentQueue.length > RECENT_LIMIT) recentQueue.shift();
+}
+
+function makeBoardSet() {
+  const used = new Set();
+  const pools = getPools();
+
+  if (gameMode === "kid") {
+    const out = [];
+    for (let i = 0; i < 4; i++) {
+      const item = pickFromPool(pools.kid, used);
+      out.push(item);
+      used.add(item.label);
+    }
+    return shuffle(out);
+  }
+
+  const selected = [];
+  selected.push(pickFromPool(pools.easy, used));
+  used.add(selected[selected.length - 1].label);
+
+  selected.push(pickFromPool(pools.medium, used));
+  used.add(selected[selected.length - 1].label);
+
+  selected.push(pickFromPool(pools.medium, used));
+  used.add(selected[selected.length - 1].label);
+
+  selected.push(pickFromPool(pools.hard, used));
+  used.add(selected[selected.length - 1].label);
+
+  return shuffle(selected);
+}
+
+function replacementItem(currentCards) {
+  const used = new Set(currentCards.map(c => c.dataset.label));
+  const pools = getPools();
+
+  if (gameMode === "kid") {
+    return pickFromPool(pools.kid, used);
+  }
+
+  const poolChoices = [pools.easy, pools.medium, pools.medium, pools.hard];
+  const pool = poolChoices[Math.floor(Math.random() * poolChoices.length)];
+  return pickFromPool(pool, used);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildCards() {
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  const board = makeBoardSet();
+
+  for (let i = 0; i < 4; i++) {
+    const item = board[i];
+    const div = document.createElement("div");
+    div.className = "card";
+    renderCard(div, item);
+    div.onclick = () => claim(div);
+    cards.appendChild(div);
+  }
+}
+
+function renderCard(card, item) {
+  card.dataset.label = item.label;
+  card.dataset.points = item.points;
+  card.innerHTML = `
+    ${item.emoji ? `<div class="card-emoji">${item.emoji}</div>` : ""}
+    <div class="card-label">${item.label}</div>
+    <div class="points">+${item.points}</div>
+  `;
+}
+
+function beep() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.value = 720;
+    gain.gain.value = 0.05;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.frequency.setValueAtTime(720, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+    osc.stop(ctx.currentTime + 0.12);
+  } catch (e) {}
+}
+
+function claim(card) {
+  const points = Number(card.dataset.points);
+  const label = card.dataset.label;
+
+  beep();
+  rememberItem(label);
+
+  if (playerMode === 1) {
+    score1 += points;
+  } else {
+    if (turn === 1) {
+      score1 += points;
+      turn = 2;
+    } else {
+      score2 += points;
+      turn = 1;
+    }
+  }
+
+  updateScores();
+
+  const currentCards = [...document.querySelectorAll(".card")].filter(c => c !== card);
+  const item = replacementItem(currentCards);
+  renderCard(card, item);
+}
+
+function updateScores() {
+  document.getElementById("score1").innerText =
+    playerMode === 1 ? `Score: ${score1}` : `River: ${score1}`;
+
+  document.getElementById("score2").innerText =
+    playerMode === 2 ? `Dad: ${score2}` : "";
+
+  modeLabel.innerText = currentModeName();
+}
+
+function startGame() {
+  turn = 1;
+  score1 = 0;
+  score2 = 0;
+  recentQueue.length = 0;
+
+  saveSettings();
+
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
+
+  updateScores();
+  buildCards();
+}
+
+player1Btn.addEventListener("click", () => {
+  playerMode = 1;
+  refreshSelectionUI();
+});
+
+player2Btn.addEventListener("click", () => {
+  playerMode = 2;
+  refreshSelectionUI();
+});
+
+kidBtn.addEventListener("click", () => {
+  gameMode = "kid";
+  refreshSelectionUI();
+});
+
+classicBtn.addEventListener("click", () => {
+  gameMode = "classic";
+  refreshSelectionUI();
+});
+
+hardBtn.addEventListener("click", () => {
+  gameMode = "hard";
+  refreshSelectionUI();
+});
+
+startBtn.addEventListener("click", startGame);
+
+loadSettings();
+refreshSelectionUI();
 </script>
-
 </body>
 </html>
