@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Road Quest</title>
+
+<style>
+html,body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+font-family:Arial,Helvetica,sans-serif;
+background:#1b2b34;
+color:white;
+touch-action:manipulation;
+}
+
+.screen{
+position:absolute;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+padding:20px;
+text-align:center;
+}
+
+h1{
+font-size:48px;
+margin:0 0 20px;
+}
+
+button{
+font-size:24px;
+padding:16px 28px;
+margin:10px;
+border:none;
+border-radius:14px;
+background:white;
+color:#1b2b34;
+font-weight:bold;
+min-width:220px;
+}
+
+#game{
+display:none;
+position:absolute;
+inset:0;
+padding:12px;
+box-sizing:border-box;
+}
+
+#topbar{
+display:flex;
+justify-content:space-between;
+gap:10px;
+font-size:26px;
+font-weight:bold;
+margin-bottom:12px;
+}
+
+#cards{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+height:calc(100% - 80px);
+}
+
+.card{
+background:#ffffff;
+color:#111;
+border-radius:18px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+font-size:28px;
+font-weight:bold;
+text-align:center;
+padding:12px;
+}
+
+.points{
+font-size:22px;
+margin-top:10px;
+color:#555;
+}
+
+.small{
+font-size:18px;
+opacity:.8;
+margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div id="menu" class="screen">
+<h1>ROAD QUEST</h1>
+<button onclick="startGame(1)">1 Player / Team</button>
+<button onclick="startGame(2)">2 Player Versus</button>
+<div class="small">Tap item when you spot it outside</div>
+</div>
+
+<div id="game">
+<div id="topbar">
+<div id="score1">Score: 0</div>
+<div id="score2"></div>
+</div>
+
+<div id="cards"></div>
+</div>
+
+<script>
+let mode=1;
+let turn=1;
+let score1=0;
+let score2=0;
+
+const pool = [
+["Yellow Car",10],
+["Red Car",10],
+["Palm Tree",10],
+["Pickup Truck",10],
+["Motorcycle",15],
+["Police Car",20],
+["Billboard",15],
+["RV",20],
+["Convertible",20],
+["Dog In Car",25],
+["Handicap Plate",25],
+["Taxi",25],
+["Surfboard On Car",30],
+["Tesla Cybertruck",40],
+["Ferrari",50],
+["Lamborghini",50],
+["Out Of State Plate",20],
+["Bus",15],
+["Trailer",20],
+["Orange Car",15],
+["Roof Rack",20],
+["Jeep Wrangler",20],
+["School Bus",25],
+["Construction Crane",30]
+];
+
+function randItem(){
+return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function buildCards(){
+const cards=document.getElementById("cards");
+cards.innerHTML="";
+
+for(let i=0;i<4;i++){
+const item=randItem();
+
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`
+<div>${item[0]}</div>
+<div class="points">+${item[1]}</div>
+`;
+
+div.onclick=()=>claim(item[1],div);
+
+cards.appendChild(div);
+}
+}
+
+function claim(points,card){
+
+if(mode===1){
+score1+=points;
+}else{
+if(turn===1){
+score1+=points;
+turn=2;
+}else{
+score2+=points;
+turn=1;
+}
+}
+
+updateScores();
+
+const item=randItem();
+
+card.innerHTML=`
+<div>${item[0]}</div>
+<div class="points">+${item[1]}</div>
+`;
+
+card.onclick=()=>claim(item[1],card);
+}
+
+function updateScores(){
+document.getElementById("score1").innerText=
+mode===1 ? `Score: ${score1}` : `River: ${score1}`;
+
+document.getElementById("score2").innerText=
+mode===2 ? `Dad: ${score2}` : "";
+}
+
+function startGame(m){
+mode=m;
+turn=1;
+score1=0;
+score2=0;
+
+document.getElementById("menu").style.display="none";
+document.getElementById("game").style.display="block";
+
+updateScores();
+buildCards();
+}
+</script>
+
+</body>
+</html>
