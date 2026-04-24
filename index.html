@@ -17,9 +17,7 @@ html, body {
   background: #8fd0ff;
 }
 
-body {
-  position: relative;
-}
+body { position: relative; }
 
 #bg {
   position: fixed;
@@ -204,6 +202,8 @@ button.selected {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   background: rgba(255,255,255,0.96);
   color: #111;
   border-radius: 18px;
@@ -212,7 +212,7 @@ button.selected {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 10px;
+  padding: 10px 10px 20px;
   min-height: 120px;
   box-shadow: 0 8px 18px rgba(0,0,0,0.14);
 }
@@ -232,6 +232,25 @@ button.selected {
   font-size: 18px;
   margin-top: 8px;
   color: #555;
+}
+
+.timer-wrap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+  height: 8px;
+  background: rgba(0,0,0,0.12);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.timer-bar {
+  height: 100%;
+  width: 100%;
+  background: #26c76f;
+  border-radius: 99px;
+  transition: width 0.25s linear, background 0.25s linear;
 }
 
 .small {
@@ -307,10 +326,10 @@ button.selected {
   <button id="startBtn" type="button">Start Game</button>
 
   <div class="small">
-    Spot things outside the car. Tap the card when you find it. New one pops in right away.
+    Spot things outside the car. Tap the card when you find it. Cards refresh after 2 minutes.
   </div>
   <div class="mode-note">
-    Classic mode now favors easy finds so the game keeps moving.
+    Green timer = fresh. Yellow = aging. Red = almost gone.
   </div>
 </div>
 
@@ -325,13 +344,15 @@ button.selected {
 </div>
 
 <script>
-const STORAGE_KEY = "roadQuestSettingsV2";
+const STORAGE_KEY = "roadQuestSettingsV3";
+const CARD_LIFE_MS = 120000;
 
 let playerMode = 1;
 let gameMode = "classic";
 let turn = 1;
 let score1 = 0;
 let score2 = 0;
+let timerInterval = null;
 
 const kidPool = [
   ["🟡🚗", "Yellow Car", 10],
@@ -477,10 +498,7 @@ const startBtn = document.getElementById("startBtn");
 const modeLabel = document.getElementById("modeLabel");
 
 function saveSettings() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    playerMode,
-    gameMode
-  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ playerMode, gameMode }));
 }
 
 function loadSettings() {
@@ -508,21 +526,9 @@ function currentModeName() {
 }
 
 function getPools() {
-  if (gameMode === "kid") {
-    return { kid: kidPool };
-  }
-  if (gameMode === "hard") {
-    return {
-      easy: mediumPool,
-      medium: hardPool,
-      hard: hardPool
-    };
-  }
-  return {
-    easy: easyPool,
-    medium: mediumPool,
-    hard: hardPool
-  };
+  if (gameMode === "kid") return { kid: kidPool };
+  if (gameMode === "hard") return { easy: mediumPool, medium: hardPool, hard: hardPool };
+  return { easy: easyPool, medium: mediumPool, hard: hardPool };
 }
 
 function pickFromPool(pool, usedLabels) {
@@ -561,72 +567,52 @@ function makeBoardSet() {
 
   if (gameMode === "hard") {
     const out = [];
-    out.push(pickFromPool(pools.easy, used));
-    used.add(out[out.length - 1].label);
-
-    out.push(pickFromPool(pools.medium, used));
-    used.add(out[out.length - 1].label);
-
-    out.push(pickFromPool(pools.hard, used));
-    used.add(out[out.length - 1].label);
-
-    out.push(pickFromPool(pools.hard, used));
-    used.add(out[out.length - 1].label);
-
+    out.push(pickFromPool(pools.easy, used)); used.add(out[out.length - 1].label);
+    out.push(pickFromPool(pools.medium, used)); used.add(out[out.length - 1].label);
+    out.push(pickFromPool(pools.hard, used)); used.add(out[out.length - 1].label);
+    out.push(pickFromPool(pools.hard, used)); used.add(out[out.length - 1].label);
     return shuffle(out);
   }
 
-  // Classic: keep it moving
   const selected = [];
+  selected.push(pickFromPool(pools.easy, used)); used.add(selected[selected.length - 1].label);
+  selected.push(pickFromPool(pools.easy, used)); used.add(selected[selected.length - 1].label);
+  selected.push(pickFromPool(pools.medium, used)); used.add(selected[selected.length - 1].label);
 
-  // Always 2 easy
-  selected.push(pickFromPool(pools.easy, used));
-  used.add(selected[selected.length - 1].label);
-
-  selected.push(pickFromPool(pools.easy, used));
-  used.add(selected[selected.length - 1].label);
-
-  // Always 1 medium
-  selected.push(pickFromPool(pools.medium, used));
-  used.add(selected[selected.length - 1].label);
-
-  // Last slot: mostly easy/medium, only occasional hard
   const roll = Math.random();
-  if (roll < 0.25) {
-    selected.push(pickFromPool(pools.hard, used));
-  } else if (roll < 0.60) {
-    selected.push(pickFromPool(pools.medium, used));
-  } else {
-    selected.push(pickFromPool(pools.easy, used));
-  }
+  if (roll < 0.20) selected.push(pickFromPool(pools.hard, used));
+  else if (roll < 0.55) selected.push(pickFromPool(pools.medium, used));
+  else selected.push(pickFromPool(pools.easy, used));
 
   used.add(selected[selected.length - 1].label);
   return shuffle(selected);
 }
 
-function replacementItem(currentCards) {
+function replacementItem(currentCards, expired = false) {
   const used = new Set(currentCards.map(c => c.dataset.label));
   const pools = getPools();
 
-  if (gameMode === "kid") {
-    return pickFromPool(pools.kid, used);
-  }
+  if (gameMode === "kid") return pickFromPool(pools.kid, used);
 
   if (gameMode === "hard") {
-    const poolChoices = [pools.medium, pools.hard, pools.hard];
+    const poolChoices = expired
+      ? [pools.medium, pools.medium, pools.hard]
+      : [pools.medium, pools.hard, pools.hard];
     const pool = poolChoices[Math.floor(Math.random() * poolChoices.length)];
     return pickFromPool(pool, used);
   }
 
-  // Classic: mostly easy/medium, rare hard
   const roll = Math.random();
-  if (roll < 0.15) {
+
+  if (expired) {
+    if (roll < 0.70) return pickFromPool(pools.easy, used);
+    if (roll < 0.95) return pickFromPool(pools.medium, used);
     return pickFromPool(pools.hard, used);
-  } else if (roll < 0.50) {
-    return pickFromPool(pools.medium, used);
-  } else {
-    return pickFromPool(pools.easy, used);
   }
+
+  if (roll < 0.12) return pickFromPool(pools.hard, used);
+  if (roll < 0.45) return pickFromPool(pools.medium, used);
+  return pickFromPool(pools.easy, used);
 }
 
 function shuffle(arr) {
@@ -652,16 +638,59 @@ function buildCards() {
     div.onclick = () => claim(div);
     cards.appendChild(div);
   }
+
+  startTimerLoop();
 }
 
 function renderCard(card, item) {
   card.dataset.label = item.label;
   card.dataset.points = item.points;
+  card.dataset.createdAt = String(Date.now());
+
   card.innerHTML = `
     ${item.emoji ? `<div class="card-emoji">${item.emoji}</div>` : ""}
     <div class="card-label">${item.label}</div>
     <div class="points">+${item.points}</div>
+    <div class="timer-wrap"><div class="timer-bar"></div></div>
   `;
+}
+
+function updateCardTimers() {
+  const now = Date.now();
+  const cards = [...document.querySelectorAll(".card")];
+
+  cards.forEach(card => {
+    const createdAt = Number(card.dataset.createdAt || now);
+    const age = now - createdAt;
+    const remaining = Math.max(0, CARD_LIFE_MS - age);
+    const pct = remaining / CARD_LIFE_MS;
+
+    const bar = card.querySelector(".timer-bar");
+    if (bar) {
+      bar.style.width = `${pct * 100}%`;
+
+      if (pct > 0.50) bar.style.background = "#26c76f";
+      else if (pct > 0.20) bar.style.background = "#f4c542";
+      else bar.style.background = "#e94b4b";
+    }
+
+    if (age >= CARD_LIFE_MS) {
+      autoRefreshCard(card);
+    }
+  });
+}
+
+function autoRefreshCard(card) {
+  rememberItem(card.dataset.label);
+
+  const currentCards = [...document.querySelectorAll(".card")].filter(c => c !== card);
+  const item = replacementItem(currentCards, true);
+  renderCard(card, item);
+}
+
+function startTimerLoop() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateCardTimers, 500);
 }
 
 function beep() {
@@ -708,7 +737,7 @@ function claim(card) {
   updateScores();
 
   const currentCards = [...document.querySelectorAll(".card")].filter(c => c !== card);
-  const item = replacementItem(currentCards);
+  const item = replacementItem(currentCards, false);
   renderCard(card, item);
 }
 
