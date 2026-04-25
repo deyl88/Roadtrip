@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting…</title>
+</head>
+<body>
+  <p>Trying to recover from a missing page…</p>
+  <p>If this takes too long, go to <a id="home-link" href="/">home</a>.</p>
+
+  <script>
+    (async function recover() {
+      const path = window.location.pathname;
+      const segments = path.split('/').filter(Boolean);
+
+      const candidates = ['/'];
+      for (let i = 1; i <= segments.length; i++) {
+        candidates.push('/' + segments.slice(0, i).join('/') + '/');
+      }
+
+      candidates.reverse();
+
+      async function exists(url) {
+        try {
+          const res = await fetch(url + 'index.html', {
+            method: 'HEAD',
+            cache: 'no-store'
+          });
+          return res.ok;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      let target = '/';
+      for (const candidate of candidates) {
+        if (await exists(candidate)) {
+          target = candidate;
+          break;
+        }
+      }
+
+      const link = document.getElementById('home-link');
+      link.setAttribute('href', target);
+      window.location.replace(target);
+    })();
+  </script>
+</body>
+</html>
