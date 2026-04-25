@@ -197,8 +197,20 @@ button.selected {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  height: calc(100% - 72px);
+  height: calc(100% - 140px);
   align-content: center;
+}
+
+#bottombar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+#bottombar button {
+  min-width: 190px;
 }
 
 .card {
@@ -341,6 +353,11 @@ button.selected {
   </div>
 
   <div id="cards"></div>
+
+  <div id="bottombar">
+    <button id="refreshOneBtn" type="button">Refresh One Card</button>
+    <button id="homeBtn" type="button">Home</button>
+  </div>
 </div>
 
 <script>
@@ -495,6 +512,8 @@ const kidBtn = document.getElementById("kidBtn");
 const classicBtn = document.getElementById("classicBtn");
 const hardBtn = document.getElementById("hardBtn");
 const startBtn = document.getElementById("startBtn");
+const refreshOneBtn = document.getElementById("refreshOneBtn");
+const homeBtn = document.getElementById("homeBtn");
 const modeLabel = document.getElementById("modeLabel");
 
 function saveSettings() {
@@ -741,6 +760,21 @@ function claim(card) {
   renderCard(card, item);
 }
 
+function refreshOneCard() {
+  const cards = [...document.querySelectorAll(".card")];
+  if (!cards.length) return;
+  const index = Math.floor(Math.random() * cards.length);
+  const target = cards[index];
+  const currentCards = cards.filter(c => c !== target);
+  const item = replacementItem(currentCards);
+  renderCard(target, item);
+}
+
+function goHome() {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+}
+
 function updateScores() {
   document.getElementById("score1").innerText =
     playerMode === 1 ? `Score: ${score1}` : `River: ${score1}`;
@@ -792,6 +826,8 @@ hardBtn.addEventListener("click", () => {
 });
 
 startBtn.addEventListener("click", startGame);
+refreshOneBtn.addEventListener("click", refreshOneCard);
+homeBtn.addEventListener("click", goHome);
 
 loadSettings();
 refreshSelectionUI();
